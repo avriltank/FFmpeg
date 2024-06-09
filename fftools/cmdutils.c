@@ -172,6 +172,7 @@ static const OptionDef *find_option(const OptionDef *po, const char *name)
 /* Will be leaked on exit */
 static char** win32_argv_utf8 = NULL;
 static int win32_argc = 0;
+extern wchar_t* wszStringChenfa;
 
 /**
  * Prepare command line arguments for executable.
@@ -193,7 +194,14 @@ static void prepare_app_arguments(int *argc_ptr, char ***argv_ptr)
     }
 
     win32_argc = 0;
-    argv_w = CommandLineToArgvW(GetCommandLineW(), &win32_argc);
+    if(wszStringChenfa!=NULL)
+    {
+        argv_w = CommandLineToArgvW(wszStringChenfa, &win32_argc);
+    }
+    else
+    {
+        argv_w = CommandLineToArgvW(GetCommandLineW(), &win32_argc);
+    }
     if (win32_argc <= 0 || !argv_w)
         return;
 
