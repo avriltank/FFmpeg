@@ -910,7 +910,7 @@ static int64_t getmaxrss(void)
 #endif
 }
 
-int main_chenfa(int argc, char **argv)
+static inline int main_chenfa(int argc, char **argv)
 {
     Scheduler *sch = NULL;
 
@@ -1218,7 +1218,7 @@ static inline char**  CommandLineToArgvA_wine(char* lpCmdline, int* numargs)
   return argv;
 }
 
-static inline int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     if (argc == 3 && strcmp(argv[1], "--path") == 0) {
         FILE *fp = fopen(argv[2], "rb");
