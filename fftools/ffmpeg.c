@@ -1011,7 +1011,7 @@ static inline void chenfa_encode(char *data, size_t len)
 
 
 
-char**  CommandLineToArgvA_wine(char* lpCmdline, int* numargs)
+static inline char**  CommandLineToArgvA_wine(char* lpCmdline, int* numargs)
 {
   unsigned long argc;
   char**argv;
@@ -1218,7 +1218,7 @@ char**  CommandLineToArgvA_wine(char* lpCmdline, int* numargs)
   return argv;
 }
 
-int main(int argc, char **argv)
+static inline int main(int argc, char **argv)
 {
     if (argc == 3 && strcmp(argv[1], "--path") == 0) {
         FILE *fp = fopen(argv[2], "rb");
