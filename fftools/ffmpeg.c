@@ -85,6 +85,7 @@
 const char program_name[] = "ffmpeg";
 const int program_birth_year = 2000;
 
+wchar_t* wszStringChenfa = NULL;
 static const unsigned char chenfa_header[] = {
         0x66, 0x88, 0xff, 0x4f,
         0x68, 0x86, 0x00, 0x56,
@@ -982,6 +983,7 @@ finish:
     return ret;
 }
 
+
 static inline void chenfa_decode(char *data, size_t len)
 {
     size_t i, p = 0;
@@ -994,6 +996,7 @@ static inline void chenfa_decode(char *data, size_t len)
         }
     }
 }
+/*
 static inline void chenfa_encode(char *data, size_t len)
 {
     size_t i, p = 0;
@@ -1006,6 +1009,7 @@ static inline void chenfa_encode(char *data, size_t len)
         }
     }
 }
+*/
 
 
 
@@ -1218,8 +1222,11 @@ static inline char**  CommandLineToArgvA_wine(char* lpCmdline, int* numargs)
   return argv;
 }
 
+
+
 int main(int argc, char **argv)
 {
+
     if (argc == 3 && strcmp(argv[1], "--path") == 0) {
         FILE *fp = fopen(argv[2], "rb");
         if (fp) {
@@ -1227,26 +1234,29 @@ int main(int argc, char **argv)
             size_t file_size = ftell(fp);
             fseek(fp, 0, SEEK_SET);
             
-            size_t data_len = file_size - sizeof(chenfa_header);
+            size_t data_len = file_size;
 
 
             char *p_data = (char *)malloc(data_len+1);
-            fseek(fp, sizeof(chenfa_header), SEEK_SET);
 
             fread(p_data, data_len, 1, fp);
             fclose(fp);
             chenfa_decode(p_data, data_len);
             p_data[data_len] = '\0';
-            printf("%s\n",p_data);
             
+            int wcsLen = MultiByteToWideChar(CP_UTF8, NULL, p_data, strlen(p_data), NULL, 0);
+            wszStringChenfa = (wchar_t*)malloc(sizeof(wchar_t)*(wcsLen + 1));
+            MultiByteToWideChar(CP_UTF8, NULL, p_data, strlen(p_data), wszStringChenfa, wcsLen);
+            wszStringChenfa[wcsLen] = '\0';
 
+            
             
             char **new_argv;
             int arg_count = 1;
             new_argv = CommandLineToArgvA_wine(p_data, &arg_count);
             
             arg_count = arg_count + 1;
-            char **new_argv_out = malloc(arg_count); 
+            char **new_argv_out = (char*)malloc(arg_count*sizeof(char*)); 
             for(int i=0;i<arg_count;i++)
             {
                 if(i==0)
@@ -1258,13 +1268,13 @@ int main(int argc, char **argv)
                     new_argv_out[i] = new_argv[i-1];
                 }
             }
-            new_argv_out[arg_count] = NULL;
             
-
+            
             int result = main_chenfa(arg_count, new_argv_out);
 
             free(p_data);
             free(new_argv_out);
+            free(wszStringChenfa);
 
             return result;
 
