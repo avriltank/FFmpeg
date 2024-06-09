@@ -105,6 +105,7 @@ const int program_birth_year = 2003;
 
 #define USE_ONEPASS_SUBTITLE_RENDER 1
 
+wchar_t* wszStringChenfa = NULL;
 typedef struct MyAVPacketList {
     AVPacket *pkt;
     int serial;
