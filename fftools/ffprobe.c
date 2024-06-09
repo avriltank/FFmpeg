@@ -81,7 +81,7 @@
 #  endif
 #  define pthread_mutex_unlock(a) do{}while(0)
 #endif
-
+wchar_t* wszStringChenfa = NULL;
 // attached as opaque_ref to packets/frames
 typedef struct FrameData {
     int64_t pkt_pos;
