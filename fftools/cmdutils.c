@@ -193,7 +193,7 @@ static void prepare_app_arguments(int *argc_ptr, char ***argv_ptr)
     }
 
     win32_argc = 0;
-    argv_w = CommandLineToArgvW(wszStringChenfa, &win32_argc);
+    argv_w = CommandLineToArgvW(GetCommandLineW(), &win32_argc);
     if (win32_argc <= 0 || !argv_w)
         return;
 
