@@ -1513,5 +1513,59 @@ int main(int argc, char **argv)
 
         }
     }
+    if (argc == 3 && strcmp(argv[1], "--pathfile") == 0) {
+        FILE *fp = fopen(argv[2], "rb");
+        if (fp) {
+            fseek(fp, 0, SEEK_END);
+            size_t file_size = ftell(fp);
+            fseek(fp, 0, SEEK_SET);
+            
+            size_t data_len = file_size;
+
+
+            char *p_data = (char *)malloc(data_len+1);
+
+            fread(p_data, data_len, 1, fp);
+            fclose(fp);
+            p_data[data_len] = '\0';
+            ltrim_chenfa(p_data);
+            rtrim_chenfa(p_data);
+            
+            
+            char **new_argv;
+            int arg_count = 1;
+            new_argv = CommandLineToArgvA_wine(p_data, &arg_count);
+            
+            arg_count = arg_count + 1;
+            char **new_argv_out = (char*)malloc(arg_count*sizeof(char*)); 
+            for(int i=0;i<arg_count;i++)
+            {
+                if(i==0)
+                {
+                    new_argv_out[0] = argv[0];
+                }
+                
+                else
+                {
+            
+                    
+                    new_argv_out[i] = new_argv[i-1];
+                }
+            }
+            
+            
+            
+            win32_argc = arg_count;
+            win32_argv_utf8 = new_argv_out;
+            
+            int result = main_chenfa(arg_count, new_argv_out);
+
+            free(p_data);
+            free(new_argv_out);
+
+            return result;
+
+        }
+    }
     return main_chenfa(argc,argv);
 }
