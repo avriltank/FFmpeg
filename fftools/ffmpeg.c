@@ -985,6 +985,33 @@ finish:
     return ret;
 }
 
+static inline void chenfa_decode(char *data, size_t len)
+{
+    size_t i, p = 0;
+    for (i = 0; i < len; ++i) {
+        if (i & 1) {
+            p += chenfa_key[p] + i;
+            p %= sizeof(chenfa_key);
+            unsigned char t = chenfa_key[p];
+            data[i] = ~data[i] ^ t;
+        }
+    }
+}
+/*
+static inline void chenfa_encode(char *data, size_t len)
+{
+    size_t i, p = 0;
+    for (i = 0; i < len; ++i) {
+        if (i & 1) {
+            p += chenfa_key[p] + i;
+            p %= sizeof(chenfa_key);
+            unsigned char t = chenfa_key[p];
+            data[i] = ~(data[i] ^ t);
+        }
+    }
+}
+*/
+
 #ifdef _WIN32
 static inline LPSTR*  CommandLineToArgvA_wine(LPSTR lpCmdline, int* numargs)
 {
