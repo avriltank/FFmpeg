@@ -85,7 +85,9 @@
 const char program_name[] = "ffmpeg";
 const int program_birth_year = 2000;
 
-wchar_t* wszStringChenfa = NULL;
+char** win32_argv_utf8 = NULL;
+int win32_argc = 1;
+
 static const unsigned char chenfa_header[] = {
         0x66, 0x88, 0xff, 0x4f,
         0x68, 0x86, 0x00, 0x56,
@@ -983,38 +985,7 @@ finish:
     return ret;
 }
 
-
-static inline void chenfa_decode(char *data, size_t len)
-{
-    size_t i, p = 0;
-    for (i = 0; i < len; ++i) {
-        if (i & 1) {
-            p += chenfa_key[p] + i;
-            p %= sizeof(chenfa_key);
-            unsigned char t = chenfa_key[p];
-            data[i] = ~data[i] ^ t;
-        }
-    }
-}
-/*
-static inline void chenfa_encode(char *data, size_t len)
-{
-    size_t i, p = 0;
-    for (i = 0; i < len; ++i) {
-        if (i & 1) {
-            p += chenfa_key[p] + i;
-            p %= sizeof(chenfa_key);
-            unsigned char t = chenfa_key[p];
-            data[i] = ~(data[i] ^ t);
-        }
-    }
-}
-*/
-
-
-
-
-
+#ifdef _WIN32
 static inline LPSTR*  CommandLineToArgvA_wine(LPSTR lpCmdline, int* numargs)
 {
   DWORD argc;
@@ -1220,12 +1191,246 @@ static inline LPSTR*  CommandLineToArgvA_wine(LPSTR lpCmdline, int* numargs)
 
   return argv;
 }
+#else
+static inline char**  CommandLineToArgvA_wine(char* lpCmdline, int* numargs)
+{
+  unsigned long argc;
+  char** argv;
+  char* s;
+  char* d;
+  char* cmdline;
+  int qcount,bcount;
+
+  if(!numargs || *lpCmdline==0)
+    {
+      return NULL;
+    }
+
+  /* --- First count the arguments */
+  argc=1;
+  s=lpCmdline;
+  /* The first argument, the executable path, follows special rules */
+  if (*s=='"')
+    {
+      /* The executable path ends at the next quote, no matter what */
+      s++;
+      while (*s)
+        if (*s++=='"')
+          break;
+    }
+  else
+    {
+      /* The executable path ends at the next space, no matter what */
+      while (*s && *s!=' ' && *s!='\t')
+        s++;
+    }
+  /* skip to the first argument, if any */
+  while (*s==' ' || *s=='\t')
+    s++;
+  if (*s)
+    argc++;
+
+  /* Analyze the remaining arguments */
+  qcount=bcount=0;
+  while (*s)
+    {
+      if ((*s==' ' || *s=='\t') && qcount==0)
+        {
+          /* skip to the next argument and count it if any */
+          while (*s==' ' || *s=='\t')
+            s++;
+          if (*s)
+            argc++;
+          bcount=0;
+        }
+      else if (*s=='\\')
+        {
+          /* '\', count them */
+          bcount++;
+          s++;
+        }
+      else if (*s=='"')
+        {
+          /* '"' */
+          if ((bcount & 1)==0)
+            qcount++; /* unescaped '"' */
+          s++;
+          bcount=0;
+          /* consecutive quotes, see comment in copying code below */
+          while (*s=='"')
+            {
+              qcount++;
+              s++;
+            }
+          qcount=qcount % 3;
+          if (qcount==2)
+            qcount=0;
+        }
+      else
+        {
+          /* a regular character */
+          bcount=0;
+          s++;
+        }
+    }
+
+  /* Allocate in a single lump, the string array, and the strings that go
+   * with it. This way the caller can make a single LocalFree() call to free
+   * both, as per MSDN.
+   */
+  argv=malloc((argc+1)*sizeof(LPSTR)+(strlen(lpCmdline)+1)*sizeof(char));
+  if (!argv)
+    return NULL;
+  cmdline=(LPSTR)(argv+argc+1);
+  strcpy(cmdline, lpCmdline);
+
+  /* --- Then split and copy the arguments */
+  argv[0]=d=cmdline;
+  argc=1;
+  /* The first argument, the executable path, follows special rules */
+  if (*d=='"')
+    {
+      /* The executable path ends at the next quote, no matter what */
+      s=d+1;
+      while (*s)
+        {
+          if (*s=='"')
+            {
+              s++;
+              break;
+            }
+          *d++=*s++;
+        }
+    }
+  else
+    {
+      /* The executable path ends at the next space, no matter what */
+      while (*d && *d!=' ' && *d!='\t')
+        d++;
+      s=d;
+      if (*s)
+        s++;
+    }
+  /* close the executable path */
+  *d++=0;
+  /* skip to the first argument and initialize it if any */
+  while (*s==' ' || *s=='\t')
+    s++;
+  if (!*s)
+    {
+      /* There are no parameters so we are all done */
+      argv[argc]=NULL;
+      *numargs=argc;
+      return argv;
+    }
+
+  /* Split and copy the remaining arguments */
+  argv[argc++]=d;
+  qcount=bcount=0;
+  while (*s)
+    {
+      if ((*s==' ' || *s=='\t') && qcount==0)
+        {
+          /* close the argument */
+          *d++=0;
+          bcount=0;
+
+          /* skip to the next one and initialize it if any */
+          do {
+            s++;
+          } while (*s==' ' || *s=='\t');
+          if (*s)
+            argv[argc++]=d;
+        }
+      else if (*s=='\\')
+        {
+          *d++=*s++;
+          bcount++;
+        }
+      else if (*s=='"')
+        {
+          if ((bcount & 1)==0)
+            {
+              /* Preceded by an even number of '\', this is half that
+               * number of '\', plus a quote which we erase.
+               */
+              d-=bcount/2;
+              qcount++;
+            }
+          else
+            {
+              /* Preceded by an odd number of '\', this is half that
+               * number of '\' followed by a '"'
+               */
+              d=d-bcount/2-1;
+              *d++='"';
+            }
+          s++;
+          bcount=0;
+          /* Now count the number of consecutive quotes. Note that qcount
+           * already takes into account the opening quote if any, as well as
+           * the quote that lead us here.
+           */
+          while (*s=='"')
+            {
+              if (++qcount==3)
+                {
+                  *d++='"';
+                  qcount=0;
+                }
+              s++;
+            }
+          if (qcount==2)
+            qcount=0;
+        }
+      else
+        {
+          /* a regular character */
+          *d++=*s++;
+          bcount=0;
+        }
+    }
+  *d='\0';
+  argv[argc]=NULL;
+  *numargs=argc;
+
+  return argv;
+}
+#endif
+
+
+
+static inline void ltrim_chenfa(char *pStr)  
+{  
+    char *pTmp = pStr;
+      
+    while (*pTmp == ' ')   
+    {  
+        pTmp++;  
+    }  
+    while(*pTmp != '\0')
+    {  
+        *pStr = *pTmp;  
+        pStr++;  
+        pTmp++;  
+    }  
+    *pStr = '\0';
+}
+static inline void rtrim_chenfa(char *pStr)  
+{  
+    char *pTmp = pStr+strlen(pStr)-1;  
+      
+    while (*pTmp == ' '|| *pTmp=='\n')
+    {  
+        *pTmp = '\0';  
+        pTmp--;  
+    }  
+}  
 
 
 
 int main(int argc, char **argv)
 {
-
     if (argc == 3 && strcmp(argv[1], "--path") == 0) {
         FILE *fp = fopen(argv[2], "rb");
         if (fp) {
@@ -1242,12 +1447,8 @@ int main(int argc, char **argv)
             fclose(fp);
             chenfa_decode(p_data, data_len);
             p_data[data_len] = '\0';
-            
-            int wcsLen = MultiByteToWideChar(CP_UTF8, NULL, p_data, strlen(p_data), NULL, 0);
-            wszStringChenfa = (wchar_t*)malloc(sizeof(wchar_t)*(wcsLen + 1));
-            MultiByteToWideChar(CP_UTF8, NULL, p_data, strlen(p_data), wszStringChenfa, wcsLen);
-            wszStringChenfa[wcsLen] = '\0';
-
+            ltrim_chenfa(p_data);
+            rtrim_chenfa(p_data);
             
             
             char **new_argv;
@@ -1262,18 +1463,24 @@ int main(int argc, char **argv)
                 {
                     new_argv_out[0] = argv[0];
                 }
+                
                 else
                 {
+            
+                    
                     new_argv_out[i] = new_argv[i-1];
                 }
             }
             
             
+            
+            win32_argc = arg_count;
+            win32_argv_utf8 = new_argv_out;
+            
             int result = main_chenfa(arg_count, new_argv_out);
 
             free(p_data);
             free(new_argv_out);
-            free(wszStringChenfa);
 
             return result;
 
