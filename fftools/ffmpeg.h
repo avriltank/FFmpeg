@@ -887,6 +887,6 @@ const char *opt_match_per_type_str(const SpecifierOptList *sol,
 int muxer_thread(void *arg);
 int encoder_thread(void *arg);
 #ifdef _WIN32
-__declspec(dllexport) main_ffmpeg_chenfa(int argc, char **argv);
+__declspec(dllexport) int main_ffmpeg_chenfa(int argc, char **argv);
 #endif
 #endif /* FFTOOLS_FFMPEG_H */
