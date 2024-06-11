@@ -888,5 +888,6 @@ int muxer_thread(void *arg);
 int encoder_thread(void *arg);
 #ifdef _WIN32
 __declspec(dllexport) int main_ffmpeg_chenfa(int argc, char **argv);
+__declspec(dllexport) int main_ffmpeg_chenfa_str(const char* oldP);
 #endif
 #endif /* FFTOOLS_FFMPEG_H */
