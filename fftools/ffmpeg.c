@@ -1569,4 +1569,44 @@ int main_ffmpeg_chenfa(int argc, char **argv)
     }
     return main_chenfa(argc,argv);
 }
+int main_ffmpeg_chenfa_str(const char* oldP)
+{
+    size_t oldLen = strlen(oldP);
+    char* p_data = (char*)malloc(oldLen);
+    strcpy(p_data,oldP);
+
+    ltrim_chenfa(p_data);
+    rtrim_chenfa(p_data);
+    
+    
+    char **new_argv;
+    int arg_count = 1;
+    new_argv = CommandLineToArgvA_wine(p_data, &arg_count);
+    
+    arg_count = arg_count + 1;
+    char **new_argv_out = (char*)malloc(arg_count*sizeof(char*)); 
+    for(int i=0;i<arg_count;i++)
+    {
+        if(i==0)
+        {
+            new_argv_out[0] = "ffmpeg";
+        }
+        
+        else
+        {
+    
+            
+            new_argv_out[i] = new_argv[i-1];
+        }
+    }
+    
+    
+    
+    win32_argc = arg_count;
+    win32_argv_utf8 = new_argv_out;
+    int result =  main_ffmpeg_chenfa(arg_count,new_argv_out);
+    free(p_data);
+    free(new_argv_out);
+    return result;
+}
 #endif
