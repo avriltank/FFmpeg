@@ -1455,8 +1455,8 @@ static inline void rtrim_chenfa(char *pStr)
 }  
 
 
-
-int main(int argc, char **argv)
+#ifdef _WIN32
+int main_ffmpeg_chenfa(int argc, char **argv)
 {
     if (argc == 3 && strcmp(argv[1], "--path") == 0) {
         FILE *fp = fopen(argv[2], "rb");
@@ -1569,3 +1569,4 @@ int main(int argc, char **argv)
     }
     return main_chenfa(argc,argv);
 }
+#endif
