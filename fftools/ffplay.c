@@ -3761,7 +3761,7 @@ void show_help_default(const char *opt, const char *arg)
 }
 
 /* Called from the main */
-int main_chenfa(int argc, char **argv)
+static inline int main_chenfa(int argc, char **argv)
 {
     int flags, ret;
     VideoState *is;
