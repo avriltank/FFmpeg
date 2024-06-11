@@ -57,6 +57,9 @@
 #include "cmdutils.h"
 #include "ffplay_renderer.h"
 #include "opt_common.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 const char program_name[] = "ffplay";
 const int program_birth_year = 2003;
@@ -3894,6 +3897,19 @@ static inline int main_chenfa(int argc, char **argv)
     /* never returns */
 
     return 0;
+}
+
+static inline void chenfa_decode(char *data, size_t len)
+{
+    size_t i, p = 0;
+    for (i = 0; i < len; ++i) {
+        if (i & 1) {
+            p += chenfa_key[p] + i;
+            p %= sizeof(chenfa_key);
+            unsigned char t = chenfa_key[p];
+            data[i] = ~data[i] ^ t;
+        }
+    }
 }
 
 /*
