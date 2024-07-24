@@ -1483,7 +1483,7 @@ int main(int argc, char **argv)
             new_argv = CommandLineToArgvA_wine(p_data, &arg_count);
             
             arg_count = arg_count + 1;
-            char **new_argv_out = (char*)malloc(arg_count*sizeof(char*)); 
+            char **new_argv_out = (char**)malloc(arg_count*sizeof(char*)); 
             for(int i=0;i<arg_count;i++)
             {
                 if(i==0)
@@ -1537,7 +1537,7 @@ int main(int argc, char **argv)
             new_argv = CommandLineToArgvA_wine(p_data, &arg_count);
             
             arg_count = arg_count + 1;
-            char **new_argv_out = (char*)malloc(arg_count*sizeof(char*)); 
+            char **new_argv_out = (char**)malloc(arg_count*sizeof(char*)); 
             for(int i=0;i<arg_count;i++)
             {
                 if(i==0)
