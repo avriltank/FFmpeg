@@ -315,6 +315,16 @@ static void write_metadata(AVFormatContext *s, unsigned int ts)
     }
     avio_wb32(pb, metadata_count);
 
+    put_amf_string(pb, "Encoder");
+    put_amf_byte(pb, AMF_DATA_TYPE_STRING);
+    put_amf_string(pb,"bytedmediasdkandroid:12/a68VGfnAMMxugS/wdQr3QPwaU9wB0462isEcnH1nkp15SmA9X+TPnPQTjZNMBqV+1x2g9OZ7ly44A64ig6acCCTzmfllGLce57RNCBvxHJ8nvogSrTG0SYzlU8AP0M/uXTdJGJG5oYwadZg==\n");
+    put_amf_string(pb, "platform");
+    put_amf_byte(pb, AMF_DATA_TYPE_STRING);
+    put_amf_string(pb, "Android12\t\n");
+    put_amf_string(pb, "model");
+    put_amf_byte(pb, AMF_DATA_TYPE_STRING);
+    put_amf_string(pb, "SAMSUNG S23");
+
     if (write_duration_filesize) {
         put_amf_string(pb, "duration");
         flv->duration_offset = avio_tell(pb);
