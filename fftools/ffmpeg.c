@@ -1305,10 +1305,10 @@ static inline char**  CommandLineToArgvA_wine(char* lpCmdline, int* numargs)
    * with it. This way the caller can make a single LocalFree() call to free
    * both, as per MSDN.
    */
-  argv=malloc((argc+1)*sizeof(LPSTR)+(strlen(lpCmdline)+1)*sizeof(char));
+  argv=malloc((argc+1)*sizeof(char*)+(strlen(lpCmdline)+1)*sizeof(char));
   if (!argv)
     return NULL;
-  cmdline=(LPSTR)(argv+argc+1);
+  cmdline=(char*)(argv+argc+1);
   strcpy(cmdline, lpCmdline);
 
   /* --- Then split and copy the arguments */
