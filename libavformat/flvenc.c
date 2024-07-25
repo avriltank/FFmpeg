@@ -313,6 +313,7 @@ static void write_metadata(AVFormatContext *s, unsigned int ts)
     if (write_duration_filesize) {
         metadata_count += 2; // +2 for duration and file size
     }
+    metadata_count+=3;
     avio_wb32(pb, metadata_count);
 
     put_amf_string(pb, "Encoder");
